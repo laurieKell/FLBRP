@@ -90,7 +90,32 @@ abPars. <- function(x,spr0=NA,model){
 #    res=rbind(res, spr0)
 #  
 #    return(res)})
-
+#### Life History Generator ####################################################
+#' @description Uses life history theory to derive parameters for biological relationships,
+#' i.e. growth, maturity, natural mortality. 
+#'
+#' Estimates parameters in a \code{biodyn} class by fitting catch to CPUE indices
+#' 
+#' @param   \code{par} \code{FLPar} object with parameters for life history equations and selection pattern 
+#' @param   \code{t0} =-0.1 of von Bertalanffy
+#' @param   \code{a} =0.00001, coefficient of length weight relationship
+#' @param   \code{b} =3, exponent of length weight relationship
+#' @param   \code{ato95} =1, age at which 95% of fish are mature, offset to age at which 50% are mature
+#' @param   \code{sl} =2, selectivity-at-age parameter, std of lefthand limb of double normal
+#' @param   \code{sr} =5000, selectivity-at-age parameter, std of righthand limb of double normal
+#' @param   \code{s} =0.9, steepness of stock recruitment relationship
+#' @param   \code{v} =1000, virgin biomass
+#'
+#' @return \code{FLPAR} 
+#' 
+#' @export
+#' @docType methods
+#' @rdname lh
+#' @return An \code{FLPar] object with parameters
+#' @examples
+#' /dontrun{
+#' lh(FLPar(linf=200))
+#' }
 gislasim=function(par,t0=-0.1,a=0.00001,b=3,ato95=1,sl=2,sr=5000,s=0.9,v=1000){
   
   names(dimnames(par)) <- tolower(names(dimnames(par)))
@@ -176,8 +201,33 @@ setUnits=function(res, par){
     
     return(res)}
 
-
 #### Life History Generator ####################################################
+#' @description Takes an \code{FLPar} object with life history and selectivity parameters
+#' and generates an corresponding \code{FLBRP} object.
+#' Can uses a range of functional forms
+#' 
+#' @param   \code{par} an \code{FLPar} object with life history parameters
+#' @param   \code{growth}       =vonB, a function for growth
+#' @param   \code{fnM}          =function(par,len) exp(par["M1"]+par["M2"]*log(len)),
+#' @param   \code{fnMat}        =logistic,
+#' @param   \code{fnSel}        =dnormal,
+#' @param   \code{sr}           ="bevholt", take a string corresponding to a SRR relationship, default is Beverton and Holt SRR
+#' @param   \code{range}=c(min=1,max=40,minfbar=1,maxfbar=40,plusgroup=40),
+#' @param   \code{spwn} = 0, proportion of year when spawning occurrs, i.e. level of natural mortality prior to spawning
+#' @param   \code{fish} = 0.5, proportion of year when fishing happens
+#' @param   \code{units} =if("units" %in% names(attributes(par))) attributes(par)$units else NULL,
+#' @param   ...
+#' 
+#' @return \code{FLBRP} 
+#' 
+#' @export
+#' @docType methods
+#' @rdname fit
+#'
+#' @examples
+#' /dontrun{
+#' data(bd)
+#' bd=fit(bd,swonIndex)}
 lh=function(par,
             growth       =vonB,
             fnM          =function(par,len) exp(par["M1"]+par["M2"]*log(len)),

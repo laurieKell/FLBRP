@@ -1,6 +1,7 @@
 ##############################################################
 #' noise
 #'
+
 #' A noise generator
 #' 
 #' @param   \code{n}, length of time series to generate

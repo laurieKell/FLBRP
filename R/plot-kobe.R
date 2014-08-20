@@ -1,7 +1,7 @@
 setGeneric('kobe',     function(object,method,...)    standardGeneric('kobe'))
 
 kobeFn=function(object,what=c("sims","trks","pts","smry","wrms")[1],
-                prob=c(0.75,0.5,.25),year=NULL,nwrms=10){         
+                probs=c(0.75,0.5,.25),year=NULL,nwrms=10){         
   
   trks. =NULL
   pts.  =NULL
@@ -12,8 +12,8 @@ kobeFn=function(object,what=c("sims","trks","pts","smry","wrms")[1],
   ## trks
   if ("trks" %in% what){
     
-    trks.=rbind(ddply(object,.(year), function(x) data.frame(quantity="stock",  pctl=prob,value=quantile(x$stock,    prob, na.rm=TRUE))),
-                ddply(object,.(year), function(x) data.frame(quantity="harvest",pctl=prob,value=quantile(x$harvest,  prob, na.rm=TRUE))))
+    trks.=rbind(ddply(object,.(year), function(x) data.frame(quantity="stock",  pctl=probs,value=quantile(x$stock,    probs, na.rm=TRUE))),
+                ddply(object,.(year), function(x) data.frame(quantity="harvest",pctl=probs,value=quantile(x$harvest,  probs, na.rm=TRUE))))
     
     trks.=transform(trks.,pctl=paste(substr(ac(signif(pctl,2)),3,nchar(ac(signif(pctl,2)))),ifelse(nchar(ac(trks.$pctl))==3,"0",""),"%",sep=""))
     trks.=cast(trks.,year+pctl~quantity,value="value") 
@@ -44,24 +44,24 @@ kobeFn=function(object,what=c("sims","trks","pts","smry","wrms")[1],
   if (length(what)==1) res[[what]] else res[what]}
 
 setMethod('kobe',  signature(object="FLBRP",method="missing"),  
-          function(object,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],prob=c(0.75,0.5,.25),year=NULL,nwrms=10){
+          function(object,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],probs=c(0.75,0.5,.25),year=NULL,nwrms=10){
             if (is.null(year)) year=range(object)["maxyear"]
             
             dat=model.frame(mcf(FLQuants(stock  =ssb.obs( object)%/%refpts(object)[proxy,"ssb"],
                                          harvest=fbar.obs(object)%/%refpts(object)[proxy,"harvest"])),drop=T)
             
-            res=kobe:::kobeFn(dat,what=what,prob=prob,year=year,nwrms=nwrms)
+            res=kobe:::kobeFn(dat,what=what,probs=probs,year=year,nwrms=nwrms)
             if (length(what)==1)
               return(res[[what]])
             else
               return(res[what])})
 
 setMethod('kobe',  signature(object="FLBRPs",method="missing"),  
-          function(object,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],prob=c(0.75,0.5,.25),year=NULL,nwrms=10){
+          function(object,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],probs=c(0.75,0.5,.25),year=NULL,nwrms=10){
             
-            res=llply(object,function(x,proxy,what,prob,year,nwrms)
-              kobe(x,proxy=proxy,what=what,prob=prob,year=year,nwrms=nwrms)
-              ,proxy,what=what,prob=prob,year=year,nwrms=nwrms)
+            res=llply(object,function(x,proxy,what,probs,year,nwrms)
+              kobe(x,proxy=proxy,what=what,probs=probs,year=year,nwrms=nwrms)
+              ,proxy,what=what,probs=probs,year=year,nwrms=nwrms)
             
             res=list(trks=ldply(res, function(x) x$trks),
                      pts =ldply(res, function(x) x$pts),
@@ -75,14 +75,14 @@ setMethod('kobe',  signature(object="FLBRPs",method="missing"),
               return(res[what])})
 
 setMethod('kobe',  signature(object="FLBRP",method="FLStock"),  
-          function(object,method,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],prob=c(0.75,0.5,.25),year=NULL,nwrms=10){
+          function(object,method,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],probs=c(0.75,0.5,.25),year=NULL,nwrms=10){
             
             if (is.null(year)) year=range(method)["maxyear"]
             
             dat=model.frame(mcf(FLQuants(stock  =ssb( method)%/%refpts(object)[proxy,"ssb"],
                                          harvest=fbar(method)%/%refpts(object)[proxy,"harvest"])),drop=T)
             
-            res=kobeFn(dat,what=what,prob=prob,year=year,nwrms=nwrms)
+            res=kobeFn(dat,what=what,probs=probs,year=year,nwrms=nwrms)
             
             if (length(what)==1)
               return(res)
@@ -90,11 +90,11 @@ setMethod('kobe',  signature(object="FLBRP",method="FLStock"),
               return(res[what])})
 
 setMethod('kobe',  signature(object="FLBRP",method="FLStocks"),  
-          function(object,method,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],prob=c(0.75,0.5,.25),year=NULL,nwrms=10){
+          function(object,method,proxy="msy",what=c("sims","trks","pts","smry","wrms")[1],probs=c(0.75,0.5,.25),year=NULL,nwrms=10){
             
-            res=mlply(method,function(x,object,proxy,what,prob,year,nwrms)
-              kobe(object,x,proxy=proxy,what=what,prob=prob,year=year,nwrms=nwrms)
-              ,proxy,what=what,prob=prob,year=year,nwrms=nwrms)
+            res=mlply(method,function(x,object,proxy,what,probs,year,nwrms)
+              kobe(object,x,proxy=proxy,what=what,probs=probs,year=year,nwrms=nwrms)
+              ,proxy,what=what,probs=probs,year=year,nwrms=nwrms)
             
             res=list(trks=ldply(res, function(x) x$trks),
                      pts =ldply(res, function(x) x$pts),
