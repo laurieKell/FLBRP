@@ -15,8 +15,6 @@ exportClasses(
   "FLBRP",
   "FLBRPs")
 export(
-  "lh",
-  "gislasim",
   "aav",
   "antiCurve",
   "beer",
